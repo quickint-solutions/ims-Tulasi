@@ -132,6 +132,14 @@ class Command(BaseCommand):
                     f"Cleared reversal links from {cleared_reversals} stock movement(s)."
                 )
 
+            cleared_category_parents = ItemCategory.objects.exclude(parent=None).update(
+                parent=None
+            )
+            if cleared_category_parents:
+                self.stdout.write(
+                    f"Cleared parent links from {cleared_category_parents} item category(s)."
+                )
+
             for label, model in DELETE_MODELS:
                 deleted, _details = model.objects.all().delete()
                 self.stdout.write(f"Deleted {label}: {deleted}")
