@@ -1,0 +1,113 @@
+{% extends "base_public.html" %}
+{% load spares %}
+{% block title %}{{ item.item_number }} &middot; {{ item.name }}{% endblock %}
+{% block content %}
+<div class="public__head">
+  <div class="small muted mono">{{ item.item_number }}</div>
+  <h1 style="margin-top:4px">{{ item.name }}</h1>
+  <div class="small muted mt-8">{{ item.category.name }}{% if item.sub_category %} / {{ item.sub_category.name }}{% endif %}</div>
+  {% if show_stock %}
+    <div class="divider"></div>
+    <div class="stat__label">Current stock</div>
+    <div class="qty-big">{{ total_quantity|floatformat:"-2" }}
+      <span style="font-size:15px;font-weight:500">{{ item.uom.code }}</span></div>
+    <span class="badge {% if item.stock_status == 'OUT_OF_STOCK' %}badge--danger{% elif item.stock_status == 'LOW_STOCK' %}badge--warn{% else %}badge--ok{% endif %}">{{ item.stock_status_label }}</span>
+  {% endif %}
+  <div class="public__meta">
+    <span class="chip">Unit: {{ item.uom.code }}</span>
+    {% if item.spare_type %}<span class="chip">{{ item.get_spare_type_display }}</span>{% endif %}
+  </div>
+</div>
+
+{% if item.image %}
+<div class="card"><div class="card__body">
+  <img class="thumb" src="{{ item.image.url }}" alt="{{ item.name }}">
+</div></div>
+{% endif %}
+
+<div class="card">
+  <div class="card__head"><h2>Specification</h2></div>
+  <div class="card__body">
+    <table class="spec-table">
+      {% if item.manufacturer %}<tr><th>Make</th><td>{{ item.manufacturer }}</td></tr>{% endif %}
+      {% if item.model_number %}<tr><th>Model</th><td>{{ item.model_number }}</td></tr>{% endif %}
+      {% if item.material %}<tr><th>Material</th><td>{{ item.material }}{% if item.material_grade %} / {{ item.material_grade }}{% endif %}</td></tr>{% endif %}
+      {% if item.weight %}<tr><th>Weight</th><td>{{ item.weight_display }}</td></tr>{% endif %}
+      {% if item.size %}<tr><th>Size</th><td>{{ item.size_display }}</td></tr>{% endif %}
+      {% if item.dimensions_display %}<tr><th>Dimensions</th><td>{{ item.dimensions_display }}</td></tr>{% endif %}
+      {% if item.colour %}<tr><th>Colour</th><td>{{ item.colour }}</td></tr>{% endif %}
+      {% if item.spare_type %}<tr><th>Type</th><td>{{ item.get_spare_type_display }}</td></tr>{% endif %}
+      {% if item.application %}<tr><th>Application</th><td>{{ item.application }}</td></tr>{% endif %}
+      {% if item.specification %}<tr><th>Specification</th><td>{{ item.specification|linebreaksbr }}</td></tr>{% endif %}
+      {% for cf in custom_defs %}
+        {% with value=item.custom_fields|dict_get:cf.key %}
+          {% if value %}<tr><th>{{ cf.label }}</th><td>{{ value }}</td></tr>{% endif %}
+        {% endwith %}
+      {% endfor %}
+      <tr><th>Unit</th><td>{{ item.uom.code }}</td></tr>
+    </table>
+  </div>
+</div>
+
+{% if show_location and balances %}
+<div class="card">
+  <div class="card__head"><h2>Where it is stored</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Warehouse</th><th>Rack</th><th>Col</th><th>Table</th><th class="num">Qty</th></tr></thead>
+      <tbody>
+        {% for b in balances %}
+        <tr><td>{{ b.warehouse.name }}</td><td class="mono">{{ b.location.rack_code|default:"-" }}</td>
+          <td class="mono">{{ b.location.column_code|default:"-" }}</td>
+          <td class="mono">{{ b.location.table_code|default:"-" }}</td>
+          <td class="num">{{ b.quantity|floatformat:"-2" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if documents %}
+<div class="card">
+  <div class="card__head"><h2>Documents</h2></div>
+  <div class="card__body">
+    {% for d in documents %}
+      <div class="mb-8"><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title|default:d.filename }}</a>
+        <span class="chip">{{ d.get_doc_type_display }}</span></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card__body text-center">
+    <div style="max-width:230px;margin:0 auto">{{ barcode_svg|safe }}</div>
+    <div class="mono small mt-8">{{ item.barcode_number }}</div>
+    {% if logged_in %}
+      <a class="btn btn--sm mt-16" href="{% url 'items:detail' item.pk %}">Open in the inventory system</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if logged_in %}
+<div class="alert alert--info">
+  <svg width="16" height="16" style="flex:0 0 16px;margin-top:2px"><use href="#i-alert"/></svg>
+  <div>You are signed in, so you can open the internal record. This public page shows
+    product details only &mdash; stock quantity and bin location are on the
+    <a href="{% url 'items:detail' item.pk %}">item page</a> and the scanner.</div>
+</div>
+{% endif %}
+
+<div class="public__foot">
+  <div class="strong">{{ company.company_name }}</div>
+  {% if company.contact_number or company.email %}
+    <div class="small muted">
+      {{ company.contact_number }}{% if company.contact_number and company.email %} &middot; {% endif %}
+      {% if company.email %}<a href="mailto:{{ company.email }}">{{ company.email }}</a>{% endif %}
+    </div>
+  {% endif %}
+  {% if company.website %}<div class="small"><a href="{{ company.website }}" rel="noopener">{{ company.website }}</a></div>{% endif %}
+  <div class="small muted mt-8">Product information &middot; scanned from label {{ item.barcode_number }}</div>
+</div>
+{% endblock %}

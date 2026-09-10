@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card"><div class="card__body card__body--flush table-wrap">
+  <table class="data">
+    <thead><tr><th>When</th><th>Item</th><th>Barcode</th><th class="num">Copies</th>
+      <th>Printer</th><th class="mid">Reprint</th><th>By</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+      <tr><td class="small nowrap">{{ l.created_at|date:"d-m-Y H:i" }}</td>
+        <td class="mono"><a href="{% url 'items:detail' l.item_id %}">{{ l.item.item_number }}</a>
+          <div class="small muted">{{ l.item.name|truncatechars:34 }}</div></td>
+        <td class="mono small">{{ l.barcode_snapshot }}</td>
+        <td class="num">{{ l.copies }}</td>
+        <td class="small">{{ l.printer.name|default:"Browser" }}</td>
+        <td class="mid">{% if l.is_reprint %}<span class="badge badge--info">Reprint</span>{% endif %}</td>
+        <td class="small">{{ l.created_by.username|default:"&mdash;" }}</td></tr>
+    {% empty %}<tr><td colspan="7" class="empty"><strong>No labels printed yet</strong></td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+</div>
+{% endblock %}

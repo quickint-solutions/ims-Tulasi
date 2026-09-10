@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'category.manage' in user_perms %}<a class="btn btn--primary" href="{% url 'masters:uom_create' %}">New unit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card"><div class="card__body card__body--flush table-wrap">
+  <table class="data">
+    <thead><tr><th>Code</th><th>Name</th><th class="num">Decimals</th><th class="mid">Status</th><th class="mid no-print">Edit</th></tr></thead>
+    <tbody>
+    {% for u in uoms %}
+      <tr><td class="mono">{{ u.code }}</td><td>{{ u.name }}</td><td class="num">{{ u.decimal_places }}</td>
+        <td class="mid">{% if u.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--muted">Inactive</span>{% endif %}</td>
+        <td class="mid no-print">{% if 'category.manage' in user_perms %}<a class="btn btn--sm" href="{% url 'masters:uom_update' u.pk %}">Edit</a>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="5" class="empty"><strong>No units defined</strong></td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

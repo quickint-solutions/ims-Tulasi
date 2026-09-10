@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'user.manage' in user_perms %}<a class="btn btn--primary" href="{% url 'accounts:user_create' %}">New user</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body no-print">
+    <form method="get" class="filters">
+      <div class="field"><label>Search</label><input type="search" name="q" value="{{ request.GET.q }}"></div>
+      <div class="field"><label>Role</label>
+        <select name="role"><option value="">All roles</option>
+          {% for r in roles %}<option value="{{ r.pk }}" {% if request.GET.role == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>Status</label>
+        <select name="status"><option value="">All</option>
+          <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+          <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Disabled</option>
+        </select></div>
+      <div class="filters__actions"><button class="btn btn--primary">Filter</button>
+        <a class="btn" href="{% url 'accounts:user_list' %}">Reset</a></div>
+    </form>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Employee code</th>
+        <th>Email</th><th>Last login</th><th class="mid">Status</th><th class="mid no-print">Edit</th></tr></thead>
+      <tbody>
+      {% for u in users %}
+        <tr><td class="mono">{{ u.username }}</td><td>{{ u.get_full_name|default:"&mdash;" }}</td>
+          <td>{% if u.role %}<span class="badge badge--brand">{{ u.role.name }}</span>{% else %}<span class="muted">None</span>{% endif %}</td>
+          <td class="small">{{ u.employee_code|default:"&mdash;" }}</td>
+          <td class="small">{{ u.email|default:"&mdash;" }}</td>
+          <td class="small">{{ u.last_login|date:"d-m-Y H:i"|default:"Never" }}</td>
+          <td class="mid">{% if u.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--danger">Disabled</span>{% endif %}</td>
+          <td class="mid no-print">{% if 'user.manage' in user_perms %}<a class="btn btn--sm" href="{% url 'accounts:user_update' u.pk %}">Edit</a>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="8" class="empty"><strong>No users found</strong></td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

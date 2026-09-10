@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:640px">
+  <div class="card__head"><h2>Print a batch of labels</h2></div>
+  <form method="post" novalidate>{% csrf_token %}
+    <div class="card__body">
+      <p class="small muted">Labels print at 50 &times; 25 mm. Set columns per row on the printer
+        profile to lay several across a sheet; leave it at 1 for a roll printer.</p>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+      </div>
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary"><svg width="15" height="15"><use href="#i-print"/></svg> Build print sheet</button>
+      <a class="btn" href="{% url 'labels:preview' %}">Single label preview</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

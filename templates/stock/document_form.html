@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate data-formset>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert--error mb-16">{{ form.non_field_errors }}</div>{% endif %}
+  {% if formset.non_form_errors %}<div class="alert alert--error mb-16">{{ formset.non_form_errors }}</div>{% endif %}
+
+  <div class="card">
+    <div class="card__head"><h2>Document</h2>
+      <span class="small muted">Document numbers are entered by you &mdash; nothing is forced.</span></div>
+    <div class="card__body"><div class="form-grid">
+      {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Lines</h2>
+      <button class="btn btn--sm" type="button" data-formset-add>
+        <svg width="14" height="14"><use href="#i-plus"/></svg> Add line</button></div>
+    <div class="card__body card__body--flush table-wrap">
+      {{ formset.management_form }}
+      <table class="data">
+        <thead><tr>
+          {% for f in formset.empty_form %}{% if f.name != 'DELETE' and f.name != 'id' %}
+            <th>{{ f.label }}</th>{% endif %}{% endfor %}
+          <th class="mid">Remove</th>
+        </tr></thead>
+        <tbody data-formset-body>
+          {% for lineform in formset %}
+          <tr class="formset-row" data-location-chain>
+            {{ lineform.id }}
+            {% for f in lineform %}{% if f.name != 'DELETE' and f.name != 'id' %}
+              <td>{{ f }}{{ f.errors }}</td>{% endif %}{% endfor %}
+            <td class="mid">{{ lineform.DELETE }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <template data-formset-template>
+        {% for f in formset.empty_form %}{% if f.name != 'DELETE' and f.name != 'id' %}
+          <td>{{ f }}</td>{% endif %}{% endfor %}
+        <td class="mid"><button type="button" class="btn btn--sm btn--ghost" data-formset-remove>&times;</button></td>
+      </template>
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary" type="submit" name="save">Save as draft</button>
+      <button class="btn btn--ok" type="submit" name="save_and_post">Save &amp; post to stock</button>
+      <a class="btn" href="{% url 'stock:'|add:kind|add:'_list' %}">Cancel</a>
+      <span class="small muted">A draft moves no stock. Posting writes the ledger rows.</span>
+    </div>
+  </div>
+</form>
+{% endblock %}

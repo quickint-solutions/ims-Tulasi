@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  <a class="btn" href="{% url 'items:import_template' %}"><svg width="15" height="15"><use href="#i-excel"/></svg> Download template</a>
+{% endblock %}
+{% block content %}
+<div class="grid-2" style="grid-template-columns:1fr 340px;align-items:start">
+  <div class="card">
+    <div class="card__head"><h2>Upload</h2></div>
+    <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <div class="card__body"><div class="form-grid" style="grid-template-columns:1fr">
+        {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+      </div></div>
+      <div class="card__foot btn-row">
+        <button class="btn btn--primary">Import</button>
+        <a class="btn" href="{% url 'items:list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>How it works</h2></div>
+    <div class="card__body">
+      <table class="spec-table">
+        <tr><th>Required columns</th><td>Item Number, Item Name, Category, UOM</td></tr>
+        <tr><th>Optional</th><td>Every other specification field, plus Warehouse / Rack /
+          Column / Table and an Opening Quantity</td></tr>
+        <tr><th>Opening stock</th><td>Posted as a normal opening-stock document so it lands in
+          the ledger, not as a hand-edited number</td></tr>
+        <tr><th>Prices</th><td class="muted">Never read. Any price column in your sheet is
+          ignored.</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if result %}
+<div class="card">
+  <div class="card__head"><h2>Import result</h2></div>
+  <div class="card__body">
+    <div class="stats">
+      <div class="stat stat--ok"><div class="stat__label">Created</div><div class="stat__value">{{ result.created }}</div></div>
+      <div class="stat stat--brand"><div class="stat__label">Updated</div><div class="stat__value">{{ result.updated }}</div></div>
+      <div class="stat stat--warn"><div class="stat__label">Skipped</div><div class="stat__value">{{ result.skipped }}</div></div>
+      <div class="stat"><div class="stat__label">Opening lines</div><div class="stat__value">{{ result.opening_lines }}</div></div>
+    </div>
+    {% if result.errors %}
+      <h3 class="mb-8">Rows that need attention</h3>
+      <ul class="small">{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

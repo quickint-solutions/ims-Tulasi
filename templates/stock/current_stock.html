@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block page_actions %}
+  {% if 'report.export' in user_perms %}
+    <a class="btn" href="{% url 'reports:run' 'current_stock' %}?export=excel&{{ querystring }}">
+      <svg width="15" height="15"><use href="#i-excel"/></svg> Export Excel</a>{% endif %}
+  <button class="btn" data-print><svg width="15" height="15"><use href="#i-print"/></svg> Print</button>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body no-print">
+    <form method="get" class="filters">
+      <div class="field"><label>Search</label>
+        <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Item, barcode, location"></div>
+      <div class="field"><label>Warehouse</label>
+        <select name="warehouse"><option value="">All warehouses</option>
+          {% for w in warehouses %}<option value="{{ w.pk }}" {% if request.GET.warehouse == w.pk|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>Category</label>
+        <select name="category"><option value="">All categories</option>
+          {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>View</label>
+        <select name="group">
+          <option value="item" {% if group == 'item' %}selected{% endif %}>Total per item</option>
+          <option value="location" {% if group == 'location' %}selected{% endif %}>Item &amp; location</option>
+        </select></div>
+      <div class="field"><label>Zero stock</label>
+        <select name="hide_zero">
+          <option value="1" {% if request.GET.hide_zero != '0' %}selected{% endif %}>Hide zero rows</option>
+          <option value="0" {% if request.GET.hide_zero == '0' %}selected{% endif %}>Show everything</option>
+        </select></div>
+      <div class="filters__actions">
+        <button class="btn btn--primary">Filter</button>
+        <a class="btn" href="{% url 'stock:current' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card__body card__body--flush table-wrap">
+    {% if group == 'item' %}
+    <table class="data">
+      <thead><tr><th>Item number</th><th>Item name</th><th>UOM</th>
+        <th class="num">Quantity</th><th class="num">Reserved</th><th class="mid">Bins</th>
+        <th class="num">Reorder</th><th class="mid">Status</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr><td class="mono"><a href="{% url 'items:detail' r.item_id %}">{{ r.item__item_number }}</a></td>
+          <td>{{ r.item__name }}</td><td class="small">{{ r.item__uom__code }}</td>
+          <td class="num strong">{{ r.qty|qty }}</td>
+          <td class="num">{{ r.reserved|qty }}</td>
+          <td class="mid small">{{ r.locations }}</td>
+          <td class="num small">{{ r.item__reorder_level|qty }}</td>
+          <td class="mid">
+            {% if r.qty <= 0 %}<span class="badge badge--danger">Out</span>
+            {% elif r.item__reorder_level and r.qty <= r.item__reorder_level %}<span class="badge badge--warn">Low</span>
+            {% else %}<span class="badge badge--ok">OK</span>{% endif %}
+          </td></tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty"><strong>No stock rows</strong>
+          Post an opening stock or inward document first.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <table class="data">
+      <thead><tr><th>Item number</th><th>Item name</th><th>Warehouse</th><th>Rack</th>
+        <th>Col</th><th>Table</th><th>Location</th><th class="num">Quantity</th></tr></thead>
+      <tbody>
+      {% for b in rows %}
+        <tr><td class="mono"><a href="{% url 'items:detail' b.item_id %}">{{ b.item.item_number }}</a></td>
+          <td>{{ b.item.name }}</td><td class="small">{{ b.warehouse.name }}</td>
+          <td class="mono small">{{ b.location.rack_code|default:"&mdash;" }}</td>
+          <td class="mono small">{{ b.location.column_code|default:"&mdash;" }}</td>
+          <td class="mono small">{{ b.location.table_code|default:"&mdash;" }}</td>
+          <td class="mono small"><a href="{% url 'stock:location_stock' b.location_id %}">{{ b.location.code }}</a></td>
+          <td class="num strong">{{ b.quantity|qty }} <span class="muted">{{ b.item.uom.code }}</span></td></tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty"><strong>No stock rows</strong></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

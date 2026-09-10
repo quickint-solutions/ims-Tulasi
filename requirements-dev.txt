@@ -1,0 +1,10 @@
+# Optional development / verification extras.
+# pyzbar decodes rendered barcodes and QR codes so the test suite can prove a
+# printed label is actually scannable, not merely that it looks like a barcode.
+# Needs the zbar shared library:
+#   Debian/Ubuntu : sudo apt install libzbar0
+#   macOS         : brew install zbar
+#   Windows       : bundled with the pyzbar wheel
+# The barcode tests skip cleanly when it is absent.
+-r requirements.txt
+pyzbar>=0.1.9

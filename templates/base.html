@@ -1,0 +1,194 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ page_title|default:"Dashboard" }}{% endblock %} &middot; {{ company.short_name|default:company.company_name }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+{% include "partials/icons.html" %}
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      {% if company.logo %}
+        <img class="sidebar__logo" src="{{ company.logo.url }}" alt="{{ company.company_name }}">
+      {% else %}
+        <div class="sidebar__logo-fallback">{{ company.company_name|slice:":2"|upper }}</div>
+      {% endif %}
+      <div class="sidebar__title">{{ company.short_name|default:company.company_name }}
+        <small>Inventory &amp; Barcode</small></div>
+    </div>
+
+    <nav class="nav">
+      <a href="{% url 'core:dashboard' %}" class="{% if nav == 'dashboard' %}is-active{% endif %}">
+        <svg class="ico"><use href="#i-dash"/></svg> Dashboard</a>
+
+      <a href="{% url 'labels:scanner' %}" class="{% if nav == 'scanner' %}is-active{% endif %}">
+        <svg class="ico"><use href="#i-scan"/></svg> Scanner</a>
+
+      {% if 'item.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Inventory</div>
+        <a href="{% url 'items:list' %}" class="{% if nav == 'items' %}is-active{% endif %}">Items</a>
+        <a href="{% url 'masters:category_list' %}" class="{% if nav == 'categories' %}is-active{% endif %}">Categories</a>
+        <a href="{% url 'stock:current' %}" class="{% if nav == 'current_stock' %}is-active{% endif %}">Current Stock</a>
+        <a href="{% url 'stock:ledger' %}" class="{% if nav == 'ledger' %}is-active{% endif %}">Stock Ledger</a>
+        <a href="{% url 'stock:low_stock' %}" class="{% if nav == 'low_stock' %}is-active{% endif %}">Low Stock</a>
+        <a href="{% url 'stock:out_of_stock' %}" class="{% if nav == 'out_of_stock' %}is-active{% endif %}">Out of Stock</a>
+      </div>
+      {% endif %}
+
+      {% if 'stock.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Transactions</div>
+        <a href="{% url 'stock:inward_list' %}" class="{% if nav == 'inward' %}is-active{% endif %}">Inward</a>
+        <a href="{% url 'stock:outward_list' %}" class="{% if nav == 'outward' %}is-active{% endif %}">Outward</a>
+        <a href="{% url 'stock:transfer_list' %}" class="{% if nav == 'transfer' %}is-active{% endif %}">Transfer</a>
+        <a href="{% url 'stock:adjustment_list' %}" class="{% if nav == 'adjustment' %}is-active{% endif %}">Adjustment</a>
+        <a href="{% url 'stock:opening_list' %}" class="{% if nav == 'opening' %}is-active{% endif %}">Opening Stock</a>
+      </div>
+      {% endif %}
+
+      {% if 'warehouse.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Warehouses</div>
+        <a href="{% url 'masters:warehouse_list' %}" class="{% if nav == 'warehouses' %}is-active{% endif %}">Warehouses</a>
+        <a href="{% url 'masters:rack_list' %}" class="{% if nav == 'racks' %}is-active{% endif %}">Racks</a>
+        <a href="{% url 'masters:column_list' %}" class="{% if nav == 'columns' %}is-active{% endif %}">Columns</a>
+        <a href="{% url 'masters:table_list' %}" class="{% if nav == 'tables' %}is-active{% endif %}">Tables</a>
+        <a href="{% url 'masters:location_list' %}" class="{% if nav == 'locations' %}is-active{% endif %}">Locations</a>
+      </div>
+      {% endif %}
+
+      {% if 'barcode.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Barcode</div>
+        <a href="{% url 'labels:generator' %}" class="{% if nav == 'barcode_gen' %}is-active{% endif %}">Barcode Generator</a>
+        <a href="{% url 'labels:print_batch' %}" class="{% if nav == 'label_print' %}is-active{% endif %}">Label Printing</a>
+        <a href="{% url 'labels:preview' %}" class="{% if nav == 'label_preview' %}is-active{% endif %}">Label Preview</a>
+        <a href="{% url 'labels:scanner' %}" class="{% if nav == 'scanner' %}is-active{% endif %}">Scanner</a>
+      </div>
+      {% endif %}
+
+      {% if 'report.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Reports</div>
+        <a href="{% url 'reports:index' %}" class="{% if nav == 'reports' %}is-active{% endif %}">All Reports</a>
+        <a href="{% url 'reports:run' 'current_stock' %}">Stock Report</a>
+        <a href="{% url 'reports:run' 'inward' %}">Inward Report</a>
+        <a href="{% url 'reports:run' 'outward' %}">Outward Report</a>
+        <a href="{% url 'reports:run' 'movement_ledger' %}">Movement Report</a>
+        <a href="{% url 'reports:run' 'monthly_movement' %}">Monthly Report</a>
+        <a href="{% url 'reports:run' 'yearly_movement' %}">Yearly Report</a>
+      </div>
+      {% endif %}
+
+      {% if 'file.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Files</div>
+        <a href="{% url 'items:files' %}?kind=images" class="{% if nav == 'files' %}is-active{% endif %}">Product Images</a>
+        <a href="{% url 'items:files' %}?kind=documents">Documents</a>
+      </div>
+      {% endif %}
+
+      {% if 'user.view' in user_perms or 'audit.view' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Users</div>
+        {% if 'user.view' in user_perms %}
+        <a href="{% url 'accounts:user_list' %}" class="{% if nav == 'users' %}is-active{% endif %}">Users</a>
+        <a href="{% url 'accounts:role_list' %}" class="{% if nav == 'roles' %}is-active{% endif %}">Roles &amp; Permissions</a>
+        {% endif %}
+        {% if 'audit.view' in user_perms %}
+        <a href="{% url 'accounts:audit_log' %}" class="{% if nav == 'audit' %}is-active{% endif %}">Activity Log</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if 'erpnext.manage' in user_perms or 'api.manage' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Integration</div>
+        {% if 'erpnext.manage' in user_perms %}
+        <a href="{% url 'integration:erpnext' %}" class="{% if nav == 'erpnext' %}is-active{% endif %}">ERPNext</a>
+        <a href="{% url 'integration:sync_log' %}" class="{% if nav == 'sync_log' %}is-active{% endif %}">Sync Log</a>
+        {% endif %}
+        {% if 'api.manage' in user_perms %}
+        <a href="{% url 'integration:api_keys' %}" class="{% if nav == 'api_keys' %}is-active{% endif %}">API Keys</a>
+        <a href="{% url 'integration:api_log' %}" class="{% if nav == 'api_log' %}is-active{% endif %}">API Logs</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if 'settings.manage' in user_perms or 'printer.manage' in user_perms or 'backup.manage' in user_perms %}
+      <div class="nav__group">
+        <div class="nav__label">Settings</div>
+        {% if 'settings.manage' in user_perms %}
+        <a href="{% url 'core:company_settings' %}" class="{% if nav == 'company' %}is-active{% endif %}">Company</a>
+        <a href="{% url 'core:system_settings' %}" class="{% if nav == 'system' %}is-active{% endif %}">System Settings</a>
+        {% endif %}
+        {% if 'printer.manage' in user_perms %}
+        <a href="{% url 'labels:printer_list' %}" class="{% if nav == 'printers' %}is-active{% endif %}">Printer</a>
+        <a href="{% url 'labels:template_list' %}" class="{% if nav == 'label_templates' %}is-active{% endif %}">Label Templates</a>
+        {% endif %}
+        {% if 'backup.manage' in user_perms %}
+        <a href="{% url 'core:backup' %}" class="{% if nav == 'backup' %}is-active{% endif %}">Backup &amp; Restore</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar no-print">
+      <button class="sidebar-toggle btn btn--ghost btn--sm" data-nav-toggle aria-label="Menu">
+        <svg width="20" height="20"><use href="#i-menu"/></svg>
+      </button>
+      <form class="topbar__search" action="{% url 'items:search' %}" method="get" role="search">
+        <svg class="ico" width="15" height="15"><use href="#i-search"/></svg>
+        <input type="search" name="q" value="{{ request.GET.q|default:'' }}"
+               placeholder="Search or scan: item no, name, barcode, make, location..."
+               autocomplete="off" aria-label="Global search">
+      </form>
+      <div class="topbar__spacer"></div>
+      <a class="btn btn--sm" href="{% url 'labels:scanner' %}">
+        <svg width="15" height="15"><use href="#i-scan"/></svg> Scanner</a>
+      <div class="flex items-center gap-8">
+        <div class="small text-right" style="line-height:1.25">
+          <div class="strong">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="muted">{{ request.user.role.name|default:"No role" }}</div>
+        </div>
+        <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+          <button class="btn btn--ghost btn--sm" title="Sign out">
+            <svg width="16" height="16"><use href="#i-logout"/></svg></button>
+        </form>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="print-header">
+        {% if company.logo %}<img src="{{ company.logo.url }}" alt="">{% endif %}
+        <div class="strong">{{ company.company_name }}</div>
+        <div class="small">{% block print_subtitle %}{{ page_title }}{% endblock %}</div>
+      </div>
+
+      <div class="page-head no-print">
+        <div>
+          {% block breadcrumb %}{% endblock %}
+          <h1>{% block heading %}{{ page_title }}{% endblock %}</h1>
+          {% block subheading %}{% if page_subtitle %}<div class="page-head__sub">{{ page_subtitle }}</div>{% endif %}{% endblock %}
+        </div>
+        <div class="page-actions">{% block page_actions %}{% endblock %}</div>
+      </div>
+
+      {% include "partials/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <div class="scrim" data-nav-toggle></div>
+</div>
+<script src="{% static 'js/app.js' %}" defer></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

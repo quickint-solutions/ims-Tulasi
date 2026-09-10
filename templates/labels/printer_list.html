@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  <a class="btn btn--primary" href="{% url 'labels:printer_create' %}">New printer</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Printer</th><th>Type</th><th>Connection</th><th class="num">Label size</th>
+        <th class="num">DPI</th><th class="num">Density</th><th class="mid">Default</th>
+        <th class="mid no-print">Actions</th></tr></thead>
+      <tbody>
+      {% for p in printers %}
+        <tr><td class="strong">{{ p.name }}{% if p.system_printer_name %}<div class="small muted mono">{{ p.system_printer_name }}</div>{% endif %}</td>
+          <td class="small">{{ p.get_printer_type_display }}</td>
+          <td class="small">{{ p.get_connection_type_display }}{% if p.supports_escpos %} <span class="chip">ESC/POS</span>{% endif %}</td>
+          <td class="num">{{ p.label_width_mm|floatformat:"-2" }} &times; {{ p.label_height_mm|floatformat:"-2" }} mm</td>
+          <td class="num">{{ p.dpi }}</td><td class="num">{{ p.print_density }}</td>
+          <td class="mid">{% if p.is_default %}<span class="badge badge--brand">Default</span>{% endif %}</td>
+          <td class="mid nowrap no-print">
+            <a class="btn btn--sm" target="_blank" rel="noopener" href="{% url 'labels:test_print' p.pk %}">Test print</a>
+            <a class="btn btn--sm" href="{% url 'labels:printer_update' p.pk %}">Edit</a></td></tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty"><strong>No printer profiles</strong>
+          Add one for your Seznik Mini or any other thermal label printer.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <div class="card__head"><h2>Printing notes</h2></div>
+  <div class="card__body">
+    <table class="spec-table">
+      <tr><th>Browser print</th><td>Works with any OS-installed printer, including the Seznik
+        Mini and other thermal units. Set the paper size to 50 &times; 25 mm and margins to
+        none in the print dialog.</td></tr>
+      <tr><th>USB / Bluetooth thermal</th><td>Install the vendor driver so the unit appears as
+        a normal OS printer, then select it in the browser print dialog.</td></tr>
+      <tr><th>Network printer</th><td>Record host:port here for reference; printing still goes
+        through the OS queue.</td></tr>
+      <tr><th>ESC/POS</th><td>Tick <em>supports ESC/POS</em> to record the capability. The
+        label layout itself is HTML/CSS at true millimetre size, so no printer-specific
+        language is required.</td></tr>
+      <tr><th>Calibration</th><td>Use <strong>Test print</strong> and measure the result. If it
+        is off, adjust label gap and margin on the profile rather than the layout.</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

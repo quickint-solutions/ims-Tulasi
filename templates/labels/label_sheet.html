@@ -1,0 +1,35 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Labels &middot; {{ company.company_name }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/label.css' %}">
+<style>
+  body{background:#e3e8ee;margin:0;padding:18px}
+  .label-sheet{max-width:900px;margin:0 auto}
+  .toolbar{max-width:900px;margin:0 auto 16px;display:flex;gap:8px;align-items:center;
+    flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+  @media print{body{background:#fff;padding:0}.toolbar{display:none}
+    .label-sheet{max-width:none;margin:0}}
+</style>
+</head>
+<body>
+<div class="toolbar no-print">
+  <strong>{{ labels|length }} label{{ labels|length|pluralize }}</strong>
+  <span class="muted small">{{ width_mm|floatformat:"-2" }} &times; {{ height_mm|floatformat:"-2" }} mm{% if printer %} &middot; {{ printer.name }} ({{ printer.dpi }} dpi){% endif %}</span>
+  <span style="flex:1"></span>
+  {% if is_test %}<span class="badge badge--info">Test print</span>{% endif %}
+  <button class="btn btn--primary" onclick="window.print()">Print</button>
+  <a class="btn" href="{% url 'labels:preview' %}">Back to preview</a>
+</div>
+
+<div class="label-sheet" style="--lw:{{ width_mm|floatformat:'-2' }}mm;--lh:{{ height_mm|floatformat:'-2' }}mm;--gap:{{ gap_mm|floatformat:'-2' }}mm;--cols:{{ columns }}">
+  {% for label in labels %}{% include "labels/_label.html" with label=label %}{% endfor %}
+</div>
+
+{% if auto_print %}
+<script>window.addEventListener("load", function(){ setTimeout(function(){ window.print(); }, 350); });</script>
+{% endif %}
+</body>
+</html>

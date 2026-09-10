@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid-2" style="grid-template-columns:1fr 340px;align-items:start">
+  <form method="post" novalidate>{% csrf_token %}
+    <div class="card">
+      <div class="card__head"><h2>Connection</h2>
+        <span class="badge {% if settings_row.last_connection_ok %}badge--ok{% else %}badge--muted{% endif %}">
+          {% if settings_row.last_connection_ok %}Connected{% else %}Not verified{% endif %}</span></div>
+      <div class="card__body"><div class="form-grid">
+        {% include "partials/form_field.html" with field=form.is_enabled %}
+        {% include "partials/form_field.html" with field=form.base_url %}
+        {% include "partials/form_field.html" with field=form.api_key %}
+        {% include "partials/form_field.html" with field=form.api_secret %}
+        {% include "partials/form_field.html" with field=form.company %}
+        {% include "partials/form_field.html" with field=form.default_warehouse %}
+        {% include "partials/form_field.html" with field=form.verify_ssl %}
+        {% include "partials/form_field.html" with field=form.timeout_seconds %}
+      </div></div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h2>What to synchronise</h2></div>
+      <div class="card__body"><div class="form-grid">
+        {% include "partials/form_field.html" with field=form.sync_mode %}
+        {% include "partials/form_field.html" with field=form.sync_items %}
+        {% include "partials/form_field.html" with field=form.sync_categories %}
+        {% include "partials/form_field.html" with field=form.sync_warehouses %}
+        {% include "partials/form_field.html" with field=form.sync_stock %}
+        {% include "partials/form_field.html" with field=form.sync_inward %}
+        {% include "partials/form_field.html" with field=form.sync_outward %}
+        {% include "partials/form_field.html" with field=form.sync_transfer %}
+      </div></div>
+      <div class="card__foot btn-row">
+        <button class="btn btn--primary" name="save">Save settings</button>
+        <button class="btn" name="test">Test connection</button>
+        {% if 'erpnext.sync' in user_perms %}
+          <button class="btn btn--ok" name="sync"
+                  data-confirm="Push masters to ERPNext now?">Sync now</button>{% endif %}
+        <a class="btn" href="{% url 'integration:sync_log' %}">View sync log</a>
+      </div>
+    </div>
+  </form>
+
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Status</h2></div>
+      <div class="card__body">
+        <table class="spec-table">
+          <tr><th>Integration</th><td>{% if settings_row.is_enabled %}Enabled{% else %}Disabled{% endif %}</td></tr>
+          <tr><th>Mode</th><td>{{ settings_row.get_sync_mode_display }}</td></tr>
+          <tr><th>Last test</th><td>{{ settings_row.last_connection_at|date:"d-m-Y H:i"|default:"Never" }}</td></tr>
+          <tr><th>Last message</th><td class="small">{{ settings_row.last_connection_message|default:"&mdash;" }}</td></tr>
+          <tr><th>Last sync</th><td>{{ settings_row.last_sync_at|date:"d-m-Y H:i"|default:"Never" }}</td></tr>
+        </table>
+        <div class="divider"></div>
+        <p class="small muted">The application runs normally whether this is on or off &mdash;
+          nothing in the stock engine depends on ERPNext.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h2>Recent sync activity</h2></div>
+      <div class="card__body card__body--flush table-wrap">
+        <table class="data table--compact">
+          <thead><tr><th>When</th><th>Entity</th><th class="mid">Result</th></tr></thead>
+          <tbody>
+          {% for l in recent %}
+            <tr><td class="small">{{ l.created_at|date:"d-m H:i" }}</td><td class="small">{{ l.entity }}</td>
+              <td class="mid"><span class="badge {% if l.status == 'SUCCESS' %}badge--ok{% elif l.status == 'PARTIAL' %}badge--warn{% else %}badge--danger{% endif %}">{{ l.get_status_display }}</span></td></tr>
+          {% empty %}<tr><td colspan="3" class="empty">Nothing yet</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

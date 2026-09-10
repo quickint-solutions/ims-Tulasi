@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" novalidate>{% csrf_token %}
+  <div class="card">
+    <div class="card__head"><h2>Stock behaviour</h2></div>
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.allow_negative_stock %}
+      {% include "partials/form_field.html" with field=form.require_adjustment_approval %}
+      {% include "partials/form_field.html" with field=form.low_stock_banner %}
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>Document numbering</h2>
+      <span class="small muted">Suggestions only &mdash; every number can be overwritten.</span></div>
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.suggest_document_numbers %}
+      {% include "partials/form_field.html" with field=form.inward_prefix %}
+      {% include "partials/form_field.html" with field=form.outward_prefix %}
+      {% include "partials/form_field.html" with field=form.transfer_prefix %}
+      {% include "partials/form_field.html" with field=form.adjustment_prefix %}
+      {% include "partials/form_field.html" with field=form.opening_prefix %}
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>Scanner &amp; public QR page</h2></div>
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.scanner_auto_focus %}
+      {% include "partials/form_field.html" with field=form.scanner_beep %}
+      {% include "partials/form_field.html" with field=form.public_page_enabled %}
+      {% include "partials/form_field.html" with field=form.show_public_stock %}
+      {% include "partials/form_field.html" with field=form.show_public_location %}
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>Display</h2></div>
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.date_format %}
+      {% include "partials/form_field.html" with field=form.rows_per_page %}
+    </div></div>
+    <div class="card__foot"><button class="btn btn--primary">Save settings</button></div>
+  </div>
+</form>
+{% endblock %}

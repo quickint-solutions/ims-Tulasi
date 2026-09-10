@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'user.manage' in user_perms %}<a class="btn btn--primary" href="{% url 'accounts:role_create' %}">New role</a>{% endif %}
+{% endblock %}
+{% block content %}
+{% for role in roles %}
+<div class="card">
+  <div class="card__head">
+    <div><h2>{{ role.name }} {% if role.is_system %}<span class="badge badge--muted">System</span>{% endif %}</h2>
+      <div class="small muted">{{ role.description }}</div></div>
+    <div class="btn-row">
+      <span class="chip">{{ role.users.count }} user{{ role.users.count|pluralize }}</span>
+      {% if 'user.manage' in user_perms %}<a class="btn btn--sm" href="{% url 'accounts:role_update' role.pk %}">Edit permissions</a>{% endif %}
+    </div>
+  </div>
+  <div class="card__body">
+    {% for p in role.permissions.all %}<span class="chip mb-8">{{ p.label }}</span> {% empty %}
+      <span class="muted small">No permissions assigned.</span>{% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  <a class="btn btn--primary" href="{% url 'items:custom_field_create' %}">New field</a>
+{% endblock %}
+{% block content %}
+<div class="card"><div class="card__body card__body--flush table-wrap">
+  <table class="data">
+    <thead><tr><th>Label</th><th>Key</th><th>Type</th><th class="mid">Required</th>
+      <th class="mid">On public page</th><th class="num">Order</th><th class="mid">Status</th><th class="mid no-print">Edit</th></tr></thead>
+    <tbody>
+    {% for f in fields %}
+      <tr><td class="strong">{{ f.label }}</td><td class="mono small">{{ f.key }}</td>
+        <td class="small">{{ f.get_field_type_display }}</td>
+        <td class="mid">{% if f.is_required %}Yes{% else %}No{% endif %}</td>
+        <td class="mid">{% if f.show_on_public_page %}Yes{% else %}No{% endif %}</td>
+        <td class="num">{{ f.sort_order }}</td>
+        <td class="mid">{% if f.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--muted">Inactive</span>{% endif %}</td>
+        <td class="mid no-print"><a class="btn btn--sm" href="{% url 'items:custom_field_update' f.pk %}">Edit</a></td></tr>
+    {% empty %}<tr><td colspan="8" class="empty"><strong>No custom fields</strong>
+      Add your own item attributes here without changing any code.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

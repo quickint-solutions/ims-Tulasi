@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block heading %}{% endblock %}
+{% block content %}
+<div class="scanner">
+  <div class="scanner__head">
+    <h1>Inventory Scanner</h1>
+  </div>
+
+  <form method="get" action="{% url 'labels:scanner' %}">
+    <div class="scanner__input">
+      <svg class="ico" width="22" height="22"><use href="#i-scan"/></svg>
+      <input type="text" name="code" value="{{ code }}" data-scan-input
+             placeholder="Scan or type barcode" autocomplete="off"
+             autocapitalize="characters" spellcheck="false"
+             {% if sys_settings.scanner_auto_focus %}autofocus{% endif %}>
+    </div>
+    <div class="scanner__hint">Scan barcode to view product details</div>
+  </form>
+
+  {% if item %}
+  <div class="card scanner__card">
+    <div class="card__head">
+      <div>
+        <h2>{{ item.name }}</h2>
+        <div class="small muted mono">{{ item.item_number }} &middot; {{ item.category.name }}</div>
+      </div>
+      <span class="badge {% if item.stock_status == 'OUT_OF_STOCK' %}badge--danger{% elif item.stock_status == 'LOW_STOCK' %}badge--warn{% elif item.stock_status == 'OVERSTOCK' %}badge--info{% else %}badge--ok{% endif %}">{{ item.stock_status_label }}</span>
+    </div>
+    <div class="card__body">
+      <div class="grid-2">
+        <table class="spec-table">
+          <tr><th>Make</th><td>{{ item.manufacturer|default:"&mdash;" }}</td></tr>
+          <tr><th>Material</th><td>{{ item.material|default:"&mdash;" }}{% if item.material_grade %} / {{ item.material_grade }}{% endif %}</td></tr>
+          <tr><th>Weight</th><td>{{ item.weight_display|default:"&mdash;" }}</td></tr>
+          <tr><th>Size</th><td>{{ item.size_display|default:"&mdash;" }}</td></tr>
+          <tr><th>Colour</th><td>{{ item.colour|default:"&mdash;" }}</td></tr>
+          <tr><th>Model</th><td>{{ item.model_number|default:"&mdash;" }}</td></tr>
+        </table>
+        <div>
+          <div class="stat__label">Available</div>
+          <div class="qty-big">{{ total_quantity|floatformat:"-2" }}
+            <span style="font-size:16px;font-weight:500">{{ item.uom.code }}</span></div>
+          <div class="divider"></div>
+          <div class="stat__label mb-8">Location</div>
+          {% for b in balances %}
+            <div class="small mb-8">
+              <strong>{{ b.warehouse.name }}</strong>
+              <div class="muted mono">{{ b.location.code }}</div>
+              <div>{{ b.quantity|floatformat:"-2" }} {{ item.uom.code }}</div>
+            </div>
+          {% empty %}
+            <div class="muted small">Not stocked in any bin right now.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="card__foot">
+      <div class="scanner__actions">
+        {% if 'inward.add' in user_perms %}
+          <a class="btn btn--ok" href="{% url 'labels:scanner_action' item.pk 'inward' %}">Inward</a>{% endif %}
+        {% if 'outward.add' in user_perms %}
+          <a class="btn btn--danger" href="{% url 'labels:scanner_action' item.pk 'outward' %}">Outward</a>{% endif %}
+        {% if 'transfer.add' in user_perms %}
+          <a class="btn" href="{% url 'labels:scanner_action' item.pk 'transfer' %}">Transfer</a>{% endif %}
+        <a class="btn" href="{% url 'items:history' item.pk %}">History</a>
+        {% if 'barcode.print' in user_perms %}
+          <a class="btn" href="{% url 'labels:preview' %}?item={{ item.pk }}&copies=1">Print label</a>{% endif %}
+        {% if 'item.change' in user_perms %}
+          <a class="btn" href="{% url 'items:update' item.pk %}">Edit item</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if recent %}
+  <div class="card">
+    <div class="card__head"><h2>Recent movement</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data table--compact">
+        <thead><tr><th>Date</th><th>Type</th><th>Document</th><th class="num">Qty</th>
+          <th>Location</th><th>User</th></tr></thead>
+        <tbody>
+        {% for m in recent %}
+          <tr><td class="nowrap">{{ m.movement_date|date:"d-m-y" }}</td>
+            <td>{{ m.get_movement_type_display }}</td>
+            <td class="mono small">{{ m.document_number }}</td>
+            <td class="num">{% if m.direction > 0 %}+{% else %}&minus;{% endif %}{{ m.quantity|floatformat:"-3" }}</td>
+            <td class="mono small">{{ m.location.code }}</td>
+            <td class="small">{{ m.user.username|default:"-" }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

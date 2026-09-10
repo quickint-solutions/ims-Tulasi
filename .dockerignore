@@ -1,0 +1,11 @@
+.git
+__pycache__/
+*.pyc
+data/
+logs/
+media/
+backups/
+staticfiles/
+.env
+*.sqlite3
+node_modules/

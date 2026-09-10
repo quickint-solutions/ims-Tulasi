@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/label.css' %}">{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="grid-template-columns:340px 1fr;align-items:start">
+  <div class="card">
+    <div class="card__head"><h2>Label options</h2></div>
+    <form method="get">
+      <div class="card__body">
+        <div class="form-grid" style="grid-template-columns:1fr">
+          {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+        </div>
+      </div>
+      <div class="card__foot btn-row">
+        <button class="btn btn--primary" type="submit">Update preview</button>
+      </div>
+    </form>
+    <div class="card__body" style="border-top:1px solid var(--line)">
+      <h3 class="mb-8">Label anatomy</h3>
+      <table class="spec-table">
+        <tr><th>Area 1</th><td>QR code + &ldquo;scan to view&rdquo; hint</td></tr>
+        <tr><th>Area 2</th><td>Code 128 barcode + item number</td></tr>
+        <tr><th>Area 3</th><td>Item name</td></tr>
+        <tr><th>Size</th><td>50 mm &times; 25 mm</td></tr>
+        <tr><th>Logo</th><td class="muted">Not printed &mdash; the label is reserved for scan data</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card__head">
+        <div><h2>Preview</h2><div class="small muted">Rendered at true physical size, then zoomed.</div></div>
+        {% if label %}
+        <div class="btn-row">
+          <a class="btn btn--primary" target="_blank" rel="noopener"
+             href="{% url 'labels:print' %}?item={{ label.item.pk }}&copies={{ label.copies }}{% if label.template %}&template={{ label.template.pk }}{% endif %}{% if label.printer %}&printer={{ label.printer.pk }}{% endif %}">
+            <svg width="15" height="15"><use href="#i-print"/></svg> Print label</a>
+          <a class="btn" target="_blank" rel="noopener"
+             href="{% url 'labels:print' %}?item={{ label.item.pk }}&copies={{ label.copies }}&auto=0{% if label.template %}&template={{ label.template.pk }}{% endif %}">Print preview</a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card__body">
+        {% if label %}
+          <div class="label-stage">
+            {% with w=label.template.width_mm|default:50 h=label.template.height_mm|default:25 %}
+            <div class="label-stage__box"
+                 style="--lw:{{ w|floatformat:'-2' }}mm;--lh:{{ h|floatformat:'-2' }}mm;
+                        width:calc({{ w|floatformat:'-2' }}mm * {{ label.zoom }});
+                        height:calc({{ h|floatformat:'-2' }}mm * {{ label.zoom }})">
+              <div class="label-stage__zoom" style="transform:scale({{ label.zoom }})">
+                {% include "labels/_label.html" with label=label label_class="label--preview" %}
+              </div>
+            </div>
+            {% endwith %}
+          </div>
+          <div class="label-ruler">
+            50 mm &times; 25 mm &middot; shown at {{ label.zoom }}00% &middot;
+            {{ label.copies }} cop{{ label.copies|pluralize:"y,ies" }} queued
+          </div>
+        {% else %}
+          <div class="empty"><strong>Choose an item</strong>
+            Pick an item on the left to see its label exactly as it will print.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if label %}
+    <div class="card">
+      <div class="card__head"><h2>What the QR opens</h2></div>
+      <div class="card__body">
+        <p class="small muted mb-8">Scanning with any phone camera opens this page.
+          It is a <strong>public link</strong> &mdash; anyone holding the sticker can open
+          it, staff and customers alike &mdash; so it shows <strong>product details
+          only</strong>. Stock quantity, bin location, suppliers, documents and users
+          are never on it. The URL carries an opaque token, never an internal id.</p>
+        <code class="chip">{{ label.item.public_url }}</code>
+        <div class="mt-16">
+          <a class="btn btn--sm" target="_blank" rel="noopener"
+             href="{{ label.item.public_url_path }}">Open the public page</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

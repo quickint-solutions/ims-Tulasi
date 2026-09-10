@@ -1,0 +1,21 @@
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pager no-print">
+  <div>
+    Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+    of {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+  </div>
+  <div class="pager__links">
+    {% if page_obj.has_previous %}
+      <a href="?{{ querystring }}page=1">&laquo;</a>
+      <a href="?{{ querystring }}page={{ page_obj.previous_page_number }}">Prev</a>
+    {% endif %}
+    <span class="is-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?{{ querystring }}page={{ page_obj.next_page_number }}">Next</a>
+      <a href="?{{ querystring }}page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+    {% endif %}
+  </div>
+</div>
+{% elif page_obj %}
+<div class="pager no-print"><div>{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}</div></div>
+{% endif %}

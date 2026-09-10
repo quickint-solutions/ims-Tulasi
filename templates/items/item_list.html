@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block page_actions %}
+  {% if 'item.add' in user_perms %}<a class="btn btn--primary" href="{% url 'items:create' %}">
+    <svg width="15" height="15"><use href="#i-plus"/></svg> New item</a>{% endif %}
+  {% if 'item.import' in user_perms %}<a class="btn" href="{% url 'items:import' %}">Import</a>{% endif %}
+  {% if 'item.export' in user_perms %}<a class="btn" href="{% url 'items:export' %}?{{ querystring }}">
+    <svg width="15" height="15"><use href="#i-excel"/></svg> Export Excel</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card__body">
+    <form method="get" class="filters">
+      <div class="field"><label>Search</label>
+        <input type="search" name="q" value="{{ request.GET.q }}"
+               placeholder="Item no, name, barcode, make, drawing..."></div>
+      <div class="field"><label>Category</label>
+        <select name="category"><option value="">All categories</option>
+          {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>Warehouse</label>
+        <select name="warehouse"><option value="">Any warehouse</option>
+          {% for w in warehouses %}<option value="{{ w.pk }}" {% if request.GET.warehouse == w.pk|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>Status</label>
+        <select name="status">
+          <option value="">All</option>
+          <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active only</option>
+          <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+          <option value="low" {% if request.GET.status == 'low' %}selected{% endif %}>Low stock</option>
+          <option value="out" {% if request.GET.status == 'out' %}selected{% endif %}>Out of stock</option>
+        </select></div>
+      <div class="filters__actions">
+        <button class="btn btn--primary" type="submit">Filter</button>
+        <a class="btn" href="{% url 'items:list' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr>
+        <th>Item number</th><th>Item name</th><th>Category</th><th>Make</th>
+        <th class="num">Stock</th><th class="mid">Bins</th><th class="mid">Status</th>
+        <th class="mid no-print">Actions</th>
+      </tr></thead>
+      <tbody>
+      {% for item in items %}
+        <tr>
+          <td class="mono nowrap"><a href="{% url 'items:detail' item.pk %}">{{ item.item_number }}</a></td>
+          <td>{{ item.name }}{% if not item.is_active %} <span class="badge badge--muted">Inactive</span>{% endif %}</td>
+          <td class="small">{{ item.category.name }}{% if item.sub_category %}<div class="muted">{{ item.sub_category.name }}</div>{% endif %}</td>
+          <td class="small">{{ item.manufacturer|default:"&mdash;" }}</td>
+          <td class="num">{{ item.qty|qty }} <span class="muted">{{ item.uom.code }}</span></td>
+          <td class="mid small">{{ item.location_count|default:0 }}</td>
+          <td class="mid">
+            <span class="badge {% if item.stock_status == 'OUT_OF_STOCK' %}badge--danger{% elif item.stock_status == 'LOW_STOCK' %}badge--warn{% elif item.stock_status == 'OVERSTOCK' %}badge--info{% else %}badge--ok{% endif %}">{{ item.stock_status_label }}</span>
+          </td>
+          <td class="mid nowrap no-print">
+            {% if 'barcode.print' in user_perms %}<a class="btn btn--sm" href="{% url 'labels:preview' %}?item={{ item.pk }}&copies=1" title="Label">Label</a>{% endif %}
+            {% if 'item.change' in user_perms %}<a class="btn btn--sm" href="{% url 'items:update' item.pk %}">Edit</a>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty"><strong>No items match</strong>
+          {% if request.GET.q %}Try a different search, or clear the filters.
+          {% else %}Create your first item, or import an existing master from Excel.{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

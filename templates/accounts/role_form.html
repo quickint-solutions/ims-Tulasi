@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card">
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.code %}
+      {% include "partials/form_field.html" with field=form.name %}
+      {% include "partials/form_field.html" with field=form.description extra_class=" field--wide" %}
+      {% include "partials/form_field.html" with field=form.is_active %}
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>Permissions</h2>
+      <span class="small muted">Every capability in the system is switchable per role.</span></div>
+    <div class="card__body">
+      {% for group, subwidgets in form.grouped_permissions %}
+        <fieldset>
+          <legend>{{ group }}</legend>
+          <div class="form-grid">
+            {% for sub in subwidgets %}
+              <div class="check">{{ sub.tag }}<label for="{{ sub.id_for_label }}">{{ sub.choice_label }}</label></div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary">Save role</button>
+      <a class="btn" href="{% url 'accounts:role_list' %}">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

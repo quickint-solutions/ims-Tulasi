@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block page_actions %}<a class="btn btn--primary" href="{% url 'labels:template_create' %}">New template</a>{% endblock %}
+{% block content %}
+<div class="card"><div class="card__body card__body--flush table-wrap">
+  <table class="data">
+    <thead><tr><th>Template</th><th class="num">Size</th><th class="mid">QR</th><th class="mid">Barcode</th>
+      <th class="mid">Item name</th><th class="mid">Hint</th><th class="mid">Default</th><th class="mid no-print">Edit</th></tr></thead>
+    <tbody>
+    {% for t in templates %}
+      <tr><td class="strong">{{ t.name }}</td>
+        <td class="num">{{ t.width_mm|floatformat:"-2" }} &times; {{ t.height_mm|floatformat:"-2" }} mm</td>
+        <td class="mid">{% if t.show_qr %}Yes{% else %}No{% endif %}</td>
+        <td class="mid">{% if t.show_barcode %}Yes{% else %}No{% endif %}</td>
+        <td class="mid">{% if t.show_item_name %}Yes{% else %}No{% endif %}</td>
+        <td class="mid small">{% if t.show_scan_hint %}{{ t.scan_hint_text|truncatechars:26 }}{% else %}&mdash;{% endif %}</td>
+        <td class="mid">{% if t.is_default %}<span class="badge badge--brand">Default</span>{% endif %}</td>
+        <td class="mid no-print"><a class="btn btn--sm" href="{% url 'labels:template_update' t.pk %}">Edit</a></td></tr>
+    {% empty %}<tr><td colspan="8" class="empty"><strong>No templates</strong></td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

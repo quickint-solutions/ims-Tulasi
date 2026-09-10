@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'category.manage' in user_perms %}
+    <a class="btn btn--primary" href="{% url 'masters:category_create' %}"><svg width="15" height="15"><use href="#i-plus"/></svg> New category</a>
+    <a class="btn" href="{% url 'masters:uom_list' %}">Units of measure</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body no-print">
+    <form method="get" class="filters">
+      <div class="field"><label>Search</label><input type="search" name="q" value="{{ request.GET.q }}" placeholder="Category name or code"></div>
+      <div class="filters__actions"><button class="btn btn--primary">Search</button>
+        <a class="btn" href="{% url 'masters:category_list' %}">Reset</a></div>
+    </form>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Category</th><th>Code</th><th>Parent</th><th class="num">Items</th>
+        <th class="mid">Status</th><th class="mid no-print">Edit</th></tr></thead>
+      <tbody>
+      {% for c in categories %}
+        <tr><td>{% if c.parent %}<span class="muted">&mdash; </span>{% endif %}{{ c.name }}</td>
+          <td class="mono small">{{ c.code }}</td>
+          <td class="small">{{ c.parent.name|default:"&mdash;" }}</td>
+          <td class="num">{{ c.item_count }}</td>
+          <td class="mid">{% if c.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--muted">Inactive</span>{% endif %}</td>
+          <td class="mid no-print">{% if 'category.manage' in user_perms %}<a class="btn btn--sm" href="{% url 'masters:category_update' c.pk %}">Edit</a>{% endif %}</td></tr>
+      {% empty %}
+        <tr><td colspan="6" class="empty"><strong>No categories yet</strong>
+          Every item needs a category &mdash; create the first one.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

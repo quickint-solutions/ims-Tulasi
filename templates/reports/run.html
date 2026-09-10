@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block page_actions %}
+  {% if 'report.export' in user_perms %}
+    <a class="btn btn--primary" href="?{{ querystring }}export=excel">
+      <svg width="15" height="15"><use href="#i-excel"/></svg> Export Excel</a>{% endif %}
+  <button class="btn" data-print><svg width="15" height="15"><use href="#i-print"/></svg> Print</button>
+  <a class="btn" href="{% url 'reports:index' %}">All reports</a>
+{% endblock %}
+{% block print_subtitle %}{{ spec.title }} &mdash; {{ filter_summary }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card__body no-print">
+    <form method="get" class="filters">
+      {% if 'date_from' in spec.filters %}
+        <div class="field"><label>Date from</label><input type="date" name="date_from" value="{{ request.GET.date_from }}"></div>
+        <div class="field"><label>Date to</label><input type="date" name="date_to" value="{{ request.GET.date_to }}"></div>
+      {% endif %}
+      {% if 'q' in spec.filters %}
+        <div class="field"><label>Search</label><input type="search" name="q" value="{{ request.GET.q }}" placeholder="Item number or name"></div>
+      {% endif %}
+      {% if 'warehouse' in spec.filters %}
+        <div class="field"><label>Warehouse</label>
+          <select name="warehouse"><option value="">All</option>
+            {% for w in warehouses %}<option value="{{ w.pk }}" {% if request.GET.warehouse == w.pk|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'category' in spec.filters %}
+        <div class="field"><label>Category</label>
+          <select name="category"><option value="">All</option>
+            {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'rack' in spec.filters %}
+        <div class="field"><label>Rack</label>
+          <select name="rack"><option value="">All</option>
+            {% for r in racks %}<option value="{{ r.pk }}" {% if request.GET.rack == r.pk|stringformat:"s" %}selected{% endif %}>{{ r }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'location' in spec.filters %}
+        <div class="field"><label>Location</label>
+          <select name="location"><option value="">All</option>
+            {% for l in locations %}<option value="{{ l.pk }}" {% if request.GET.location == l.pk|stringformat:"s" %}selected{% endif %}>{{ l.code }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'type' in spec.filters %}
+        <div class="field"><label>Movement type</label>
+          <select name="type"><option value="">All</option>
+            {% for v, l in movement_types %}<option value="{{ v }}" {% if request.GET.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'user' in spec.filters %}
+        <div class="field"><label>User</label>
+          <select name="user"><option value="">All</option>
+            {% for u in users %}<option value="{{ u.pk }}" {% if request.GET.user == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
+          </select></div>
+      {% endif %}
+      {% if 'document' in spec.filters %}
+        <div class="field"><label>Document no</label><input type="text" name="document" value="{{ request.GET.document }}"></div>
+      {% endif %}
+      <div class="filters__actions">
+        <button class="btn btn--primary">Run report</button>
+        <a class="btn" href="{% url 'reports:run' spec.slug %}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card__body" style="border-top:1px solid var(--line);padding-top:12px;padding-bottom:12px">
+    <div class="small muted">{{ filter_summary }} &middot; <strong>{{ row_count }}</strong>
+      row{{ row_count|pluralize }}</div>
+  </div>
+
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr>
+        {% for head in result.columns %}
+          <th class="{% if forloop.counter0 in result.numeric %}num{% endif %}">{{ head }}</th>
+        {% endfor %}
+      </tr></thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>{% for cell in row %}
+          <td class="{% if forloop.counter0 in result.numeric %}num{% endif %}">
+            {% if forloop.counter0 in result.numeric %}{{ cell|qty }}{% else %}{{ cell|default:"" }}{% endif %}</td>
+        {% endfor %}</tr>
+      {% empty %}
+        <tr><td colspan="{{ result.columns|length }}" class="empty">
+          <strong>No rows matched</strong>Widen the date range or clear the filters.</td></tr>
+      {% endfor %}
+      </tbody>
+      {% if result.totals and not is_paginated %}
+      <tfoot><tr>{% for cell in result.totals %}
+        <td class="{% if forloop.counter0 in result.numeric %}num{% endif %}">
+          {% if forloop.counter0 in result.numeric %}{{ cell|qty }}{% else %}{{ cell|default:"" }}{% endif %}</td>
+      {% endfor %}</tr></tfoot>
+      {% endif %}
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+  {% if is_paginated and result.totals %}
+    <div class="card__foot small muted">Totals are shown on the Excel export, which contains
+      every row rather than just this page.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'report.export' in user_perms %}
+    <a class="btn" href="{% url 'reports:pack_monthly' %}"><svg width="15" height="15"><use href="#i-excel"/></svg> Monthly pack</a>
+    <a class="btn" href="{% url 'reports:pack_yearly' %}"><svg width="15" height="15"><use href="#i-excel"/></svg> Yearly pack</a>{% endif %}
+{% endblock %}
+{% block content %}
+{% for group, specs in grouped.items %}
+  {% if specs %}
+  <div class="card">
+    <div class="card__head"><h2>{{ group }}</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Report</th><th>What it shows</th><th class="mid no-print">Open</th><th class="mid no-print">Excel</th></tr></thead>
+        <tbody>
+        {% for s in specs %}
+          <tr><td class="strong"><a href="{% url 'reports:run' s.slug %}">{{ s.title }}</a></td>
+            <td class="small muted">{{ s.description }}</td>
+            <td class="mid no-print"><a class="btn btn--sm" href="{% url 'reports:run' s.slug %}">View</a></td>
+            <td class="mid no-print">{% if 'report.export' in user_perms %}
+              <a class="btn btn--sm" href="{% url 'reports:run' s.slug %}?export=excel">Export</a>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+{% endfor %}
+<p class="small muted">Every report is quantity-based. No price, value, tax or amount column
+  exists anywhere in this system.</p>
+{% endblock %}

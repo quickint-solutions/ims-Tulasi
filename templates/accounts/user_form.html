@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert--error mb-16">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="card">
+    <div class="card__head"><h2>Account</h2></div>
+    <div class="card__body"><div class="form-grid">
+      {% include "partials/form_field.html" with field=form.username %}
+      {% include "partials/form_field.html" with field=form.first_name %}
+      {% include "partials/form_field.html" with field=form.last_name %}
+      {% include "partials/form_field.html" with field=form.email %}
+      {% include "partials/form_field.html" with field=form.employee_code %}
+      {% include "partials/form_field.html" with field=form.phone %}
+      {% include "partials/form_field.html" with field=form.password1 %}
+      {% include "partials/form_field.html" with field=form.password2 %}
+      {% include "partials/form_field.html" with field=form.is_active %}
+      {% include "partials/form_field.html" with field=form.must_change_password %}
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Role &amp; access</h2></div>
+    <div class="card__body">
+      <div class="form-grid">
+        {% include "partials/form_field.html" with field=form.role %}
+        {% include "partials/form_field.html" with field=form.default_warehouse %}
+      </div>
+      <div class="divider"></div>
+      <div class="field"><label>{{ form.allowed_warehouses.label }}</label>
+        {{ form.allowed_warehouses }}
+        <div class="help">{{ form.allowed_warehouses.help_text }}</div></div>
+      <div class="divider"></div>
+      <div class="form-grid form-grid--2">
+        {% include "partials/form_field.html" with field=form.extra_permissions %}
+        {% include "partials/form_field.html" with field=form.denied_permissions %}
+      </div>
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary" type="submit">Save user</button>
+      <a class="btn" href="{% url 'accounts:user_list' %}">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

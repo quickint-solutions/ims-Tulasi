@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  {% if 'scanner.use' in user_perms %}
+    <a class="btn btn--primary" href="{% url 'labels:scanner' %}">
+      <svg width="15" height="15"><use href="#i-scan"/></svg> Open scanner</a>
+  {% endif %}
+  {% if 'inward.add' in user_perms %}
+    <a class="btn" href="{% url 'stock:inward_create' %}">New inward</a>
+  {% endif %}
+  {% if 'outward.add' in user_perms %}
+    <a class="btn" href="{% url 'stock:outward_create' %}">New outward</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if sys_settings.low_stock_banner and out_of_stock_count %}
+  <div class="alert alert--warning mb-16">
+    <svg width="16" height="16" style="flex:0 0 16px;margin-top:2px"><use href="#i-alert"/></svg>
+    <div><strong>{{ out_of_stock_count }}</strong> item{{ out_of_stock_count|pluralize }} out of
+      stock{% if low_stock_count %} and <strong>{{ low_stock_count }}</strong> at or below
+      reorder level{% endif %}.
+      <a href="{% url 'stock:out_of_stock' %}">Review</a>
+    </div>
+  </div>
+{% endif %}
+
+<div class="stats">
+  <a class="stat" href="{% url 'items:list' %}">
+    <div class="stat__label">Total items</div>
+    <div class="stat__value">{{ total_items }}</div>
+    <div class="stat__meta">{{ total_categories }} categor{{ total_categories|pluralize:"y,ies" }}</div>
+  </a>
+  <a class="stat stat--brand" href="{% url 'stock:current' %}">
+    <div class="stat__label">Total stock quantity</div>
+    <div class="stat__value">{{ total_quantity|floatformat:"-2" }}</div>
+    <div class="stat__meta">across {{ total_locations }} location{{ total_locations|pluralize }}</div>
+  </a>
+  <a class="stat" href="{% url 'masters:warehouse_list' %}">
+    <div class="stat__label">Warehouses</div>
+    <div class="stat__value">{{ total_warehouses }}</div>
+    <div class="stat__meta">independent stock each</div>
+  </a>
+  <a class="stat stat--ok" href="{% url 'stock:ledger' %}?type=INWARD">
+    <div class="stat__label">Inward today</div>
+    <div class="stat__value">{{ inward_today|floatformat:"-2" }}</div>
+    <div class="stat__meta">units received</div>
+  </a>
+  <a class="stat stat--warn" href="{% url 'stock:ledger' %}?type=OUTWARD">
+    <div class="stat__label">Outward today</div>
+    <div class="stat__value">{{ outward_today|floatformat:"-2" }}</div>
+    <div class="stat__meta">units issued</div>
+  </a>
+  <a class="stat stat--warn" href="{% url 'stock:low_stock' %}">
+    <div class="stat__label">Low stock items</div>
+    <div class="stat__value">{{ low_stock_count }}</div>
+    <div class="stat__meta">at or below reorder level</div>
+  </a>
+  <a class="stat stat--danger" href="{% url 'stock:out_of_stock' %}">
+    <div class="stat__label">Out of stock</div>
+    <div class="stat__value">{{ out_of_stock_count }}</div>
+    <div class="stat__meta">zero quantity</div>
+  </a>
+  <a class="stat" href="{% url 'stock:inward_list' %}?status=DRAFT">
+    <div class="stat__label">Draft documents</div>
+    <div class="stat__value">{{ draft_count }}</div>
+    <div class="stat__meta">not yet posted to stock</div>
+  </a>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <div><h2>Monthly movement</h2>
+      <div class="small muted">Quantity received and issued over the last 12 months.</div></div>
+  </div>
+  <div class="card__body">{{ chart_monthly|safe }}</div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card__head"><h2>Category-wise stock</h2></div>
+    <div class="card__body">{{ chart_category|safe }}</div>
+  </div>
+  <div class="card">
+    <div class="card__head"><h2>Warehouse-wise stock</h2></div>
+    <div class="card__body">{{ chart_warehouse|safe }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2>Top moving items</h2>
+    <span class="small muted">By quantity issued, last 12 months</span></div>
+  <div class="card__body">{{ chart_top_moving|safe }}</div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card__head">
+      <h2>Recent movements</h2>
+      <a class="btn btn--sm" href="{% url 'stock:ledger' %}">Full ledger</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data table--compact">
+        <thead><tr><th>Date</th><th>Type</th><th>Item</th><th class="num">Qty</th>
+          <th>Location</th><th>User</th></tr></thead>
+        <tbody>
+          {% for m in recent_movements %}
+          <tr>
+            <td class="nowrap">{{ m.movement_date|date:"d-m-y" }}</td>
+            <td><span class="badge {% if m.direction > 0 %}badge--ok{% else %}badge--warn{% endif %}">{{ m.get_movement_type_display }}</span></td>
+            <td><a href="{% url 'items:detail' m.item_id %}">{{ m.item.item_number }}</a></td>
+            <td class="num">{% if m.direction > 0 %}+{% else %}&minus;{% endif %}{{ m.quantity|floatformat:"-3" }}</td>
+            <td class="small mono">{{ m.location.code }}</td>
+            <td class="small">{{ m.user.username|default:"-" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="empty"><strong>No movements yet</strong>
+            Post an opening stock or inward document to get started.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Low stock</h2>
+      <a class="btn btn--sm" href="{% url 'stock:low_stock' %}">See all</a></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data table--compact">
+        <thead><tr><th>Item</th><th class="num">On hand</th><th class="num">Reorder</th></tr></thead>
+        <tbody>
+          {% for i in low_stock_items %}
+          <tr>
+            <td><a href="{% url 'items:detail' i.pk %}">{{ i.item_number }}</a>
+              <div class="small muted">{{ i.name|truncatechars:38 }}</div></td>
+            <td class="num">{{ i.qty|floatformat:"-2" }} {{ i.uom.code }}</td>
+            <td class="num">{{ i.reorder_level|floatformat:"-2" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="empty"><strong>Nothing below reorder level</strong>
+            Stock is healthy.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

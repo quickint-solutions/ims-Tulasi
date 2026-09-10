@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+{% if new_key %}
+<div class="alert alert--success mb-16">
+  <div><strong>Copy this key now &mdash; it is never shown again.</strong>
+    <div class="mono mt-8" style="word-break:break-all;background:#fff;padding:8px 10px;border-radius:5px">{{ new_key }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid-2" style="grid-template-columns:1fr 340px;align-items:start">
+  <div class="card">
+    <div class="card__head"><h2>Issued keys</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Name</th><th>Prefix</th><th>User</th><th>Scopes</th><th>Last used</th>
+          <th class="mid">Status</th><th class="mid no-print">Action</th></tr></thead>
+        <tbody>
+        {% for k in keys %}
+          <tr><td>{{ k.name }}</td><td class="mono small">{{ k.prefix }}&hellip;</td>
+            <td class="small">{{ k.user.username }}</td>
+            <td class="small">{% for s in k.scopes %}<span class="chip">{{ s }}</span> {% endfor %}</td>
+            <td class="small">{{ k.last_used_at|date:"d-m-Y H:i"|default:"Never" }}</td>
+            <td class="mid">{% if k.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--muted">Revoked</span>{% endif %}</td>
+            <td class="mid no-print">{% if k.is_active %}
+              <form method="post" action="{% url 'integration:api_key_revoke' k.pk %}"
+                    data-confirm="Revoke {{ k.name }}?">{% csrf_token %}
+                <button class="btn btn--sm btn--ghost">Revoke</button></form>{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="7" class="empty"><strong>No API keys yet</strong>
+          Issue one to let ERPNext or another system call this API.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Issue a key</h2></div>
+    <form method="post" novalidate>{% csrf_token %}
+      <div class="card__body"><div class="form-grid" style="grid-template-columns:1fr">
+        {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+      </div></div>
+      <div class="card__foot"><button class="btn btn--primary">Issue key</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2>How to call the API</h2></div>
+  <div class="card__body">
+    <pre class="mono small" style="background:var(--surface-2);padding:12px;border-radius:6px;overflow-x:auto">curl -H "Authorization: ApiKey &lt;your-key&gt;" \
+     {{ request.scheme }}://{{ request.get_host }}/api/v1/items/
+
+curl -X POST -H "Authorization: ApiKey &lt;your-key&gt;" \
+     -H "Content-Type: application/json" \
+     -d '{"document_number":"IN-001","warehouse":"MAIN","lines":[{"item":"SP-001","location":"MAIN/RACK-A/C-01/T-03","quantity":10}]}' \
+     {{ request.scheme }}://{{ request.get_host }}/api/v1/stock/inward/</pre>
+    <p class="small muted mt-8">Every endpoint is quantity-only. Writes need a key with the
+      <span class="chip">write</span> scope <em>and</em> a user whose role carries the matching
+      permission.</p>
+  </div>
+</div>
+{% endblock %}

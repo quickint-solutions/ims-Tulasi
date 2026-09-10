@@ -1,0 +1,30 @@
+{% comment %}
+50 mm x 25 mm spare-part label.
+AREA 1 (left)  : QR code + "SCAN TO VIEW PRODUCT DETAILS"
+AREA 2 (top r) : Code 128 barcode + item number
+AREA 3 (bot r) : item name
+No company logo here - the brief reserves the whole label for scan data.
+{% endcomment %}
+<div class="label {{ label_class }}">
+  {% if label.show_qr %}
+    <div class="label__qr">
+      {{ label.qr_svg|safe }}
+      {% if label.show_scan_hint %}<div class="label__hint">{{ label.scan_hint }}</div>{% endif %}
+    </div>
+  {% endif %}
+  {% if label.show_barcode %}
+    <div class="label__barcode">
+      {{ label.barcode_svg|safe }}
+      {% if label.show_item_number %}
+        <div class="label__code">{{ label.item.barcode_number }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if label.show_item_name %}
+    <div class="label__name {% if label.name_is_long %}label__name--long{% endif %}">
+      {{ label.item.name }}</div>
+  {% endif %}
+  {% if label.show_location and label.location_code %}
+    <div class="label__location">{{ label.location_code }}</div>
+  {% endif %}
+</div>

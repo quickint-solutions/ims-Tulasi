@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block content %}
+<div class="card">
+  <div class="card__head">
+    <div><h2>{{ location.display_path }}</h2>
+      <div class="small muted mono">{{ location.code }}</div></div>
+    <div class="text-right"><div class="stat__label">Total in this bin</div>
+      <div class="strong" style="font-size:19px">{{ total|qty }}</div></div>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Item number</th><th>Item name</th><th>UOM</th><th class="num">Quantity</th></tr></thead>
+      <tbody>
+      {% for b in rows %}
+        <tr><td class="mono"><a href="{% url 'items:detail' b.item_id %}">{{ b.item.item_number }}</a></td>
+          <td>{{ b.item.name }}</td><td class="small">{{ b.item.uom.code }}</td>
+          <td class="num">{{ b.quantity|qty }}</td></tr>
+      {% empty %}
+        <tr><td colspan="4" class="empty"><strong>This bin is empty</strong></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+# Dependencies for cPanel / shared hosting ("Setup Python App").
+#
+# Same as requirements.txt but with the PostgreSQL driver swapped for PyMySQL:
+# psycopg2-binary is unnecessary there, and mysqlclient needs a C compiler and
+# MySQL headers that shared hosts almost never provide. PyMySQL is pure Python
+# and is registered as MySQLdb in config/__init__.py.
+#
+# Install with:  pip install -r requirements-cpanel.txt
+
+Django>=5.1,<5.2
+djangorestframework>=3.15
+django-filter>=24.3
+python-barcode>=0.15
+qrcode[pil]>=7.4
+openpyxl>=3.1
+Pillow>=10.4
+whitenoise>=6.7
+PyMySQL>=1.1

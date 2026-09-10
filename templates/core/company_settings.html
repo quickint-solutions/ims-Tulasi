@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid-2" style="grid-template-columns:1fr 320px;align-items:start">
+  <div class="card">
+    <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <div class="card__body"><div class="form-grid">
+        {% for field in form %}{% include "partials/form_field.html" with field=field %}{% endfor %}
+      </div></div>
+      <div class="card__foot"><button class="btn btn--primary">Save settings</button></div>
+    </form>
+  </div>
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Current logo</h2></div>
+      <div class="card__body text-center">
+        {% if company.logo %}
+          <img src="{{ company.logo.url }}" alt="" style="max-width:200px;max-height:90px;object-fit:contain">
+        {% else %}
+          <div class="empty" style="padding:22px"><strong>No logo uploaded</strong>
+            A placeholder is shown in the sidebar until you add one.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card__head"><h2>Where the logo appears</h2></div>
+      <div class="card__body">
+        <table class="spec-table">
+          <tr><th>Sidebar header</th><td>Yes</td></tr>
+          <tr><th>Sign-in screen</th><td>Yes</td></tr>
+          <tr><th>Printed reports</th><td>Yes</td></tr>
+          <tr><th>Document print-outs</th><td>Yes</td></tr>
+          <tr><th>50 &times; 25 mm barcode label</th><td class="muted">No &mdash; the label is
+            reserved for the QR code, barcode and item name</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

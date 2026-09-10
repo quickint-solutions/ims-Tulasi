@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block page_actions %}
+  {% if 'warehouse.manage' in user_perms %}
+    <a class="btn btn--primary" href="{% url 'masters:warehouse_create' %}"><svg width="15" height="15"><use href="#i-plus"/></svg> New warehouse</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Code</th><th>Warehouse</th><th>City</th><th>Contact</th>
+        <th class="num">Locations</th><th class="num">Items</th><th class="num">Quantity</th>
+        <th class="mid">Status</th><th class="mid no-print">Edit</th></tr></thead>
+      <tbody>
+      {% for w in warehouses %}
+        <tr><td class="mono">{{ w.code }}</td><td>{{ w.name }}</td><td class="small">{{ w.city|default:"&mdash;" }}</td>
+          <td class="small">{{ w.contact_person|default:"&mdash;" }}{% if w.contact_number %}<div class="muted">{{ w.contact_number }}</div>{% endif %}</td>
+          <td class="num">{{ w.location_count }}</td><td class="num">{{ w.item_count }}</td>
+          <td class="num strong">{{ w.total_quantity|qty }}</td>
+          <td class="mid">{% if w.is_active %}<span class="badge badge--ok">Active</span>{% else %}<span class="badge badge--muted">Disabled</span>{% endif %}</td>
+          <td class="mid no-print">
+            <a class="btn btn--sm" href="{% url 'stock:current' %}?warehouse={{ w.pk }}">Stock</a>
+            {% if 'warehouse.manage' in user_perms %}<a class="btn btn--sm" href="{% url 'masters:warehouse_update' w.pk %}">Edit</a>{% endif %}</td></tr>
+      {% empty %}
+        <tr><td colspan="9" class="empty"><strong>No warehouses</strong>
+          Create at least one warehouse before entering stock.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

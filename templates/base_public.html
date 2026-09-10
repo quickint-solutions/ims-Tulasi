@@ -1,0 +1,14 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Item{% endblock %} &middot; {{ company.company_name }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body style="background:var(--bg)">
+{% include "partials/icons.html" %}
+<div class="public">{% block content %}{% endblock %}</div>
+</body>
+</html>

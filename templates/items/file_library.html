@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tabs">
+  <a href="?kind=images" class="{% if kind != 'documents' %}is-active{% endif %}">Product images</a>
+  <a href="?kind=documents" class="{% if kind == 'documents' %}is-active{% endif %}">Documents</a>
+</div>
+<div class="card">
+  <div class="card__body no-print">
+    <form method="get" class="filters">
+      <input type="hidden" name="kind" value="{{ kind }}">
+      <div class="field"><label>Search</label><input type="search" name="q" value="{{ request.GET.q }}" placeholder="Item number or name"></div>
+      <div class="filters__actions"><button class="btn btn--primary">Search</button></div>
+    </form>
+  </div>
+  <div class="card__body">
+    {% if kind == 'documents' %}
+      <div class="table-wrap"><table class="data">
+        <thead><tr><th>Item</th><th>Title</th><th>Type</th><th class="mid">Public</th><th>Uploaded</th><th class="mid">Open</th></tr></thead>
+        <tbody>
+        {% for d in rows %}
+          <tr><td class="mono"><a href="{% url 'items:detail' d.item_id %}">{{ d.item.item_number }}</a></td>
+            <td>{{ d.title|default:d.filename }}</td><td class="small">{{ d.get_doc_type_display }}</td>
+            <td class="mid">{% if d.is_public %}<span class="badge badge--info">Public</span>{% else %}<span class="badge badge--muted">Internal</span>{% endif %}</td>
+            <td class="small">{{ d.created_at|date:"d-m-Y" }}</td>
+            <td class="mid"><a class="btn btn--sm" href="{{ d.file.url }}" target="_blank" rel="noopener">Open</a></td></tr>
+        {% empty %}<tr><td colspan="6" class="empty"><strong>No documents uploaded</strong>
+          Attach drawings and datasheets from the item edit screen.</td></tr>{% endfor %}
+        </tbody></table></div>
+    {% else %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px">
+        {% for img in rows %}
+          <div>
+            <img class="thumb" src="{{ img.image.url }}" alt="{{ img.caption }}">
+            <div class="small mt-8"><a href="{% url 'items:detail' img.item_id %}" class="mono">{{ img.item.item_number }}</a></div>
+            <div class="small muted">{{ img.caption|default:img.item.name|truncatechars:30 }}</div>
+          </div>
+        {% empty %}
+          <div class="empty" style="grid-column:1/-1"><strong>No images uploaded</strong>
+            Add product photos from the item edit screen.</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

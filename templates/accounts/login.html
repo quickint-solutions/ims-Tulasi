@@ -1,0 +1,46 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in &middot; {{ company.company_name }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__brand">
+      {% if company.logo %}
+        <img src="{{ company.logo.url }}" alt="{{ company.company_name }}">
+      {% endif %}
+      <h1>{{ company.company_name }}</h1>
+      <p>Spares Inventory Management</p>
+    </div>
+
+    {% if form.errors %}
+      <div class="alert alert--error mb-16">Incorrect username or password.</div>
+    {% endif %}
+    {% if messages %}{% for m in messages %}
+      <div class="alert alert--{{ m.tags }} mb-16">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="field mb-16">
+        <label for="{{ form.username.id_for_label }}">Username</label>
+        {{ form.username }}
+      </div>
+      <div class="field mb-16">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
+      </div>
+      <button class="btn btn--primary btn--block btn--lg" type="submit">Sign in</button>
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+    <p class="small muted text-center mt-16 mb-0">
+      Quantity-based inventory. No pricing or financial data is held in this system.
+    </p>
+  </div>
+</div>
+</body>
+</html>

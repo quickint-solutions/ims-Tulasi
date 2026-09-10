@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load spares %}
+{% block heading %}{{ item.name }}{% endblock %}
+{% block subheading %}
+  <div class="page-head__sub mono">{{ item.item_number }} &middot; {{ item.category.name }}{% if item.sub_category %} / {{ item.sub_category.name }}{% endif %}</div>
+{% endblock %}
+{% block page_actions %}
+  {% if 'inward.add' in user_perms %}<a class="btn btn--ok" href="{% url 'labels:scanner_action' item.pk 'inward' %}">Inward</a>{% endif %}
+  {% if 'outward.add' in user_perms %}<a class="btn btn--danger" href="{% url 'labels:scanner_action' item.pk 'outward' %}">Outward</a>{% endif %}
+  {% if 'transfer.add' in user_perms %}<a class="btn" href="{% url 'labels:scanner_action' item.pk 'transfer' %}">Transfer</a>{% endif %}
+  <a class="btn" href="{% url 'items:history' item.pk %}">History</a>
+  {% if 'barcode.print' in user_perms %}<a class="btn" href="{% url 'labels:preview' %}?item={{ item.pk }}&copies=1"><svg width="15" height="15"><use href="#i-print"/></svg> Print label</a>{% endif %}
+  {% if 'item.change' in user_perms %}<a class="btn btn--primary" href="{% url 'items:update' item.pk %}">Edit</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="grid-template-columns:1fr 340px;align-items:start">
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Specification</h2>
+        <span class="badge {% if item.stock_status == 'OUT_OF_STOCK' %}badge--danger{% elif item.stock_status == 'LOW_STOCK' %}badge--warn{% elif item.stock_status == 'OVERSTOCK' %}badge--info{% else %}badge--ok{% endif %}">{{ item.stock_status_label }}</span>
+      </div>
+      <div class="card__body">
+        <div class="grid-2">
+          <table class="spec-table">
+            <tr><th>Make</th><td>{{ item.manufacturer|default:"&mdash;" }}</td></tr>
+            <tr><th>Model</th><td>{{ item.model_number|default:"&mdash;" }}</td></tr>
+            <tr><th>Material</th><td>{{ item.material|default:"&mdash;" }}</td></tr>
+            <tr><th>Material grade</th><td>{{ item.material_grade|default:"&mdash;" }}</td></tr>
+            <tr><th>Weight</th><td>{{ item.weight_display|default:"&mdash;" }}</td></tr>
+            <tr><th>Size</th><td>{{ item.size_display|default:"&mdash;" }}</td></tr>
+            <tr><th>Dimensions</th><td>{{ item.dimensions_display|default:"&mdash;" }}</td></tr>
+          </table>
+          <table class="spec-table">
+            <tr><th>Colour</th><td>{{ item.colour|default:"&mdash;" }}</td></tr>
+            <tr><th>Type of spare</th><td>{{ item.get_spare_type_display|default:"&mdash;" }}</td></tr>
+            <tr><th>Application</th><td>{{ item.application|default:"&mdash;" }}</td></tr>
+            <tr><th>Drawing number</th><td class="mono">{{ item.drawing_number|default:"&mdash;" }}</td></tr>
+            <tr><th>OEM part number</th><td class="mono">{{ item.oem_part_number|default:"&mdash;" }}</td></tr>
+            <tr><th>Alternate part no.</th><td class="mono">{{ item.alternate_part_number|default:"&mdash;" }}</td></tr>
+            <tr><th>Unit of measure</th><td>{{ item.uom.code }}</td></tr>
+          </table>
+        </div>
+        {% if item.specification %}<div class="divider"></div>
+          <div class="small"><strong>Specification</strong><br>{{ item.specification|linebreaksbr }}</div>{% endif %}
+        {% for cf in custom_defs %}{% with value=item.custom_fields|dict_get:cf.key %}
+          {% if value %}<div class="small mt-8"><strong>{{ cf.label }}:</strong> {{ value }}</div>{% endif %}
+        {% endwith %}{% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <div><h2>Stock by location</h2>
+          <div class="small muted">The same item can be stored in several bins.</div></div>
+        <div class="text-right"><div class="stat__label">Total</div>
+          <div class="strong" style="font-size:19px">{{ total_quantity|qty }} {{ item.uom.code }}</div></div>
+      </div>
+      <div class="card__body card__body--flush table-wrap">
+        <table class="data">
+          <thead><tr><th>Warehouse</th><th>Rack</th><th>Column</th><th>Table</th>
+            <th>Location code</th><th class="num">Quantity</th><th class="num">Available</th></tr></thead>
+          <tbody>
+          {% for b in balances %}
+            <tr><td>{{ b.warehouse.name }}</td>
+              <td class="mono">{{ b.location.rack_code|default:"&mdash;" }}</td>
+              <td class="mono">{{ b.location.column_code|default:"&mdash;" }}</td>
+              <td class="mono">{{ b.location.table_code|default:"&mdash;" }}</td>
+              <td class="mono small"><a href="{% url 'stock:location_stock' b.location_id %}">{{ b.location.code }}</a></td>
+              <td class="num">{{ b.quantity|qty }}</td>
+              <td class="num">{{ b.available_quantity|qty }}</td></tr>
+          {% empty %}
+            <tr><td colspan="7" class="empty"><strong>Not stocked anywhere</strong>
+              Post an inward or opening stock document to place it in a bin.</td></tr>
+          {% endfor %}
+          </tbody>
+          {% if balances %}
+          <tfoot><tr><td colspan="5">Total</td><td class="num">{{ total_quantity|qty }}</td><td></td></tr></tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>Recent movement</h2>
+        <a class="btn btn--sm" href="{% url 'items:history' item.pk %}">Full history</a></div>
+      <div class="card__body card__body--flush table-wrap">
+        <table class="data table--compact">
+          <thead><tr><th>Date</th><th>Type</th><th>Document</th><th class="num">Qty</th>
+            <th class="num">Balance</th><th>Location</th><th>User</th></tr></thead>
+          <tbody>
+          {% for m in movements %}
+            <tr><td class="nowrap">{{ m.movement_date|date:"d-m-Y" }}</td>
+              <td><span class="badge {% if m.direction > 0 %}badge--ok{% else %}badge--warn{% endif %}">{{ m.get_movement_type_display }}</span></td>
+              <td class="mono small">{{ m.document_number }}</td>
+              <td class="num">{% if m.direction > 0 %}+{% else %}&minus;{% endif %}{{ m.quantity|qty:3 }}</td>
+              <td class="num">{{ m.balance_after|qty }}</td>
+              <td class="mono small">{{ m.location.code }}</td>
+              <td class="small">{{ m.user.username|default:"&mdash;" }}</td></tr>
+          {% empty %}
+            <tr><td colspan="7" class="empty"><strong>No movements yet</strong></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {% if item.image %}
+    <div class="card"><div class="card__body">
+      <img class="thumb" src="{{ item.image.url }}" alt="{{ item.name }}"></div></div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card__head"><h2>Barcode &amp; QR</h2></div>
+      <div class="card__body text-center">
+        <div style="max-width:230px;margin:0 auto">{{ barcode_svg|safe }}</div>
+        <div class="mono small mt-8 strong">{{ item.barcode_number }}</div>
+        <div class="divider"></div>
+        <div style="width:120px;margin:0 auto">{{ qr_svg|safe }}</div>
+        <div class="small muted mt-8">Scan to view product details</div>
+        <div class="small mt-8"><a href="{{ item.public_url_path }}" target="_blank" rel="noopener">Open public page</a></div>
+        {% if 'barcode.print' in user_perms %}
+          <a class="btn btn--primary btn--block mt-16" href="{% url 'labels:preview' %}?item={{ item.pk }}&copies=1">Print 50&times;25 mm label</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>Stock levels</h2></div>
+      <div class="card__body">
+        <table class="spec-table">
+          <tr><th>Minimum</th><td>{{ item.minimum_stock|qty }} {{ item.uom.code }}</td></tr>
+          <tr><th>Reorder level</th><td>{{ item.reorder_level|qty }} {{ item.uom.code }}</td></tr>
+          <tr><th>Maximum</th><td>{{ item.maximum_stock|qty }} {{ item.uom.code }}</td></tr>
+        </table>
+        {% if warehouse_totals %}
+          <div class="divider"></div>
+          <div class="stat__label mb-8">By warehouse</div>
+          {% for w in warehouse_totals %}
+            <div class="flex items-center" style="justify-content:space-between">
+              <span class="small">{{ w.warehouse__name }}</span>
+              <span class="mono small">{{ w.qty|qty }}</span></div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if item.images.exists or item.documents.exists %}
+    <div class="card">
+      <div class="card__head"><h2>Files</h2></div>
+      <div class="card__body">
+        {% for img in item.images.all %}
+          <img class="thumb mb-8" src="{{ img.image.url }}" alt="{{ img.caption }}">
+        {% endfor %}
+        {% for d in item.documents.all %}
+          <div class="small mb-8"><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title|default:d.filename }}</a>
+            <span class="chip">{{ d.get_doc_type_display }}</span>
+            {% if d.is_public %}<span class="badge badge--info">Public</span>{% endif %}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block page_actions %}
+  <a class="btn" href="{% url 'labels:print_batch' %}">Batch label printing</a>
+  <a class="btn" href="{% url 'labels:print_history' %}">Print history</a>
+{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="card">
+    <div class="card__body no-print">
+      <div class="filters">
+        <div class="field"><label>Search</label>
+          <input type="search" id="bc-q" value="{{ request.GET.q }}"
+                 placeholder="Item number, name or barcode"></div>
+        <div class="field"><label>Show</label>
+          <select id="bc-filter">
+            <option value="">All items</option>
+            <option value="unprinted" {% if request.GET.filter == 'unprinted' %}selected{% endif %}>Never printed</option>
+          </select></div>
+        <div class="filters__actions">
+          <button class="btn btn--primary" type="button" id="bc-apply">Filter</button>
+          <a class="btn" href="{% url 'labels:generator' %}">Reset</a>
+        </div>
+      </div>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th class="mid"><input type="checkbox" onclick="document.querySelectorAll('[name=item]').forEach(c=>c.checked=this.checked)"></th>
+          <th>Item number</th><th>Item name</th><th>Barcode</th><th class="mid">Matches item no</th>
+          <th class="mid">Printed</th><th class="mid no-print">Label</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr><td class="mid"><input type="checkbox" name="item" value="{{ row.item.pk }}"></td>
+            <td class="mono"><a href="{% url 'items:detail' row.item.pk %}">{{ row.item.item_number }}</a></td>
+            <td>{{ row.item.name }}</td>
+            <td class="mono small">{{ row.item.barcode_number }}</td>
+            <td class="mid">{% if row.item.barcode_number == row.item.item_number %}
+              <span class="badge badge--ok">Yes</span>{% else %}<span class="badge badge--warn">Custom</span>{% endif %}</td>
+            <td class="mid">{% if row.printed %}<span class="badge badge--muted">Printed</span>{% else %}<span class="badge badge--info">New</span>{% endif %}</td>
+            <td class="mid no-print"><a class="btn btn--sm" href="{% url 'labels:preview' %}?item={{ row.item.pk }}&copies=1">Preview</a></td></tr>
+        {% empty %}<tr><td colspan="7" class="empty"><strong>No items</strong>
+          Create items first &mdash; each one gets a Code 128 barcode automatically.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot btn-row">
+      {% if 'barcode.generate' in user_perms %}
+        <button class="btn btn--primary"
+                data-confirm="Reset the barcode of every selected item to its item number?">
+          Reset selected barcodes to item number</button>{% endif %}
+      <span class="small muted">A barcode defaults to the item number. Change it per item only
+        when you need to match an existing label.</span>
+    </div>
+  </div>
+</form>
+{% include "partials/pagination.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  var apply=document.getElementById("bc-apply");
+  if(!apply) return;
+  function go(){
+    var p=new URLSearchParams();
+    var q=document.getElementById("bc-q").value.trim();
+    var f=document.getElementById("bc-filter").value;
+    if(q) p.set("q", q);
+    if(f) p.set("filter", f);
+    location.search = p.toString();
+  }
+  apply.addEventListener("click", go);
+  document.getElementById("bc-q").addEventListener("keydown", function(e){
+    if(e.key==="Enter"){ e.preventDefault(); go(); }
+  });
+})();
+</script>
+{% endblock %}
