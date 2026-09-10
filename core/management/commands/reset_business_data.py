@@ -124,6 +124,14 @@ class Command(BaseCommand):
                     f"Cleared default warehouse from {cleared_defaults} user(s)."
                 )
 
+            cleared_reversals = StockMovement.objects.exclude(reverses=None).update(
+                reverses=None
+            )
+            if cleared_reversals:
+                self.stdout.write(
+                    f"Cleared reversal links from {cleared_reversals} stock movement(s)."
+                )
+
             for label, model in DELETE_MODELS:
                 deleted, _details = model.objects.all().delete()
                 self.stdout.write(f"Deleted {label}: {deleted}")
